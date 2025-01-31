@@ -1,49 +1,80 @@
-from .config import ScriptConfig
-
-import os
-
-from lighteval.pipeline import (
-    Accelerator,
-    Pipeline,
-    PipelineParameters,
-    ParallelismManager,
-)
-from lighteval.models.transformers.transformers_model import TransformersModelConfig
-from lighteval.utils.utils import EnvConfig
-from lighteval.logging.evaluation_tracker import EvaluationTracker
+from lm_eval import simple_evaluate
+from lm_eval.tasks import TaskManager
+from typing import Any
+from transformers import AutoModelForCausalLM
+from src.config import ScriptConfig
+from src.lm_wrapper import CustomHFML
+from collections import defaultdict
 
 
-def run_eval(config: ScriptConfig):
-    hf_home = os.getenv("HF_HOME")
-    env_config = EnvConfig(cache_dir=hf_home)
+def clean_metrics(results: dict) -> dict:
+    cleaned = {}
+    for key, value in results.items():
+        clean_key = key.split(",")[0]
+        if "." in clean_key:
+            parts = clean_key.split(".")
+            current = cleaned
+            for part in parts[:-1]:
+                current = current.setdefault(part, {})
+            current[parts[-1]] = value
+        else:
+            cleaned[clean_key] = value
+    cleaned.pop("alias")
+    return cleaned
 
-    model_config = TransformersModelConfig(
-        accelerator=Accelerator(log_with=["wandb"]),
-        pretrained=config.student_model,
-        dtype="bfloat16",
-        use_chat_template=True,
+
+def clean_config(config: dict) -> dict:
+    return {
+        k: v
+        for k, v in config.items()
+        if v is not None and k != "batch_sizes"  # TODO: wtf?
+    }
+
+
+def run_single_task(
+    model: CustomHFML,
+    task_name: str,
+    task_config: dict[str, Any],
+    task_manager: TaskManager,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    results = simple_evaluate(
+        model=model,
+        tasks=[task_name],
+        task_manager=task_manager,
+        device="cuda",
+        cache_requests=True,
+        **task_config,
     )
 
-    eval_tracker = EvaluationTracker(
-        output_dir="results/",
-        save_details=True,
-        push_to_hub=config.eval_config.push_to_hub,
-        hub_results_org="s1ro1",
+    task_results = results["results"][task_name]
+    cleaned_results = clean_metrics(task_results)
+
+    return cleaned_results, clean_config(results["config"])
+
+
+def run_eval(
+    model: AutoModelForCausalLM,
+    config: ScriptConfig,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    assert model.device.type == "cuda", "Model must be on GPU, is on {}".format(
+        model.device.type
     )
 
-    pipeline_params = PipelineParameters(
-        override_batch_size=config.eval_config.batch_size,
-        # max_samples=config.eval_config.max_samples,
-        launcher_type=ParallelismManager.ACCELERATE,
-        env_config=env_config,
+    model = CustomHFML(
+        pretrained=model, batch_size=config.eval_config.batch_size, device="cuda"
     )
 
-    pipeline = Pipeline(
-        tasks=config.eval_config.datasets[0],  # TODO: more tasks
-        pipeline_parameters=pipeline_params,
-        evaluation_tracker=eval_tracker,
-        model_config=model_config,
-    )
+    task_manager = TaskManager()
+    results = defaultdict(lambda: defaultdict(dict))
 
-    pipeline.evaluate()
-    pipeline.show_results()
+    for task_name, task_config in config.eval_config.tasks.items():
+        task_results, model_config = run_single_task(
+            model, task_name, task_config, task_manager
+        )
+
+        for metric_name, value in task_results.items():
+            if metric_name:
+                results[metric_name][task_name] = value
+
+    model_config["model_dtype"] = str(model_config["model_dtype"])
+    return results, model_config

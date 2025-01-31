@@ -8,10 +8,14 @@ from transformers import AutoModelForCausalLM
 from torch import optim
 
 
-
 def setup_env(config: ScriptConfig):
     student_model = AutoModelForCausalLM.from_pretrained(config.student_model)
-    teacher_model = AutoModelForCausalLM.from_pretrained(config.teacher_model, )
+    if config.teacher_model is not None:
+        teacher_model = AutoModelForCausalLM.from_pretrained(
+            config.teacher_model,
+        )
+    else:
+        teacher_model = None
 
     optimizer = optim.AdamW(student_model.parameters(), lr=config.lr)
 
@@ -19,14 +23,19 @@ def setup_env(config: ScriptConfig):
 
 
 def main(config_path: str):
-    wandb.init(project="r1-distill")
     config = load_config(config_path)
-
-    # run initial eval
-    if config.run_initial_eval:
-        run_eval(config)
+    wandb.init(project="r1-distill", name=config.run_name)
+    wandb.save(config_path)
 
     student_model, _, _ = setup_env(config)
+    student_model.to("cuda")
+
+    if config.run_initial_eval:
+        results, model_config = run_eval(student_model, config)
+
+    wandb.log(results)
+
+    wandb.config.update(model_config)
 
 
 if __name__ == "__main__":

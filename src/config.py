@@ -1,10 +1,11 @@
 from dataclasses import dataclass
+from typing import Any
 from yaml import safe_load
 
 
 @dataclass
 class EvalConfig:
-    datasets: list[str]
+    tasks: dict[str, dict[str, Any]]
 
     push_to_hub: bool = False
 
@@ -15,6 +16,7 @@ class EvalConfig:
 @dataclass
 class ScriptConfig:
     project_name: str = "r1-distill"
+    run_name: str | None = None
     teacher_model: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
     student_model: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
     epochs: int = 1
