@@ -1,3 +1,7 @@
 eval_config:
   datasets:
     - "helm|mmlu|5|1"
+
+  # batch_size: null
+  # max_samples: null
+  push_to_hub: true

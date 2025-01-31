@@ -29,6 +29,7 @@ class ScriptConfig:
     save_steps: int = 100
 
     eval_config: EvalConfig = None
+    run_initial_eval: bool = True
 
 
 def load_config(config_path: str) -> ScriptConfig:
