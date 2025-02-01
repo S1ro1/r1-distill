@@ -31,13 +31,10 @@ def main(config_path: str):
     student_model.to("cuda")
 
     if config.run_initial_eval:
-        results, model_config = run_eval(student_model, config)
+        results = run_eval(student_model, config)
 
     wandb.log(results)
-    try:
-        wandb.config.update(model_config)
-    except Exception as e:
-        print(f"Error updating wandb config: {e}")
+    wandb.config.update(student_model.config.to_dict())
 
 
 if __name__ == "__main__":

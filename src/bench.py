@@ -18,7 +18,7 @@ def run_single_task(
     task_name: str,
     task_config: dict[str, Any],
     task_manager: TaskManager,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+) -> dict[str, Any]:
     results = simple_evaluate(
         model=model,
         tasks=[task_name],
@@ -31,13 +31,13 @@ def run_single_task(
 
     task_metrics = clean_dispatch[task_name](results["results"])
 
-    return task_metrics, None
+    return task_metrics
 
 
 def run_eval(
     model: AutoModelForCausalLM,
     config: ScriptConfig,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+) -> dict[str, Any]:
     assert model.device.type == "cuda", "Model must be on GPU, is on {}".format(
         model.device.type
     )
@@ -52,15 +52,15 @@ def run_eval(
     main_task_accuracies = {}
 
     for task_name, task_config in config.eval_config.tasks.items():
-        task_results, model_config = run_single_task(
-            model, task_name, task_config, task_manager
-        )
+        task_results = run_single_task(model, task_name, task_config, task_manager)
         results.update(task_results)
 
         if task_name in clean_dispatch:
             for key, value in task_results.items():
                 if key == task_name:
-                    main_task_accuracies[task_name.replace("leaderboard_", "")] = value[_metric_lookup.get(task_name, "acc")]
+                    main_task_accuracies[task_name.replace("leaderboard_", "")] = value[
+                        _metric_lookup.get(task_name, "acc")
+                    ]
 
     wandb.log(
         {
@@ -76,4 +76,4 @@ def run_eval(
         }
     )
 
-    return results, model_config
+    return results

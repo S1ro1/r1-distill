@@ -6,11 +6,7 @@ from yaml import safe_load
 @dataclass
 class EvalConfig:
     tasks: dict[str, dict[str, Any]]
-
-    push_to_hub: bool = False
-
     batch_size: int | None = 1
-    max_samples: int | None = 1
 
 
 @dataclass
