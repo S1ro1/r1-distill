@@ -3,6 +3,9 @@ eval_config:
     leaderboard_musr:
       num_fewshot: null
 
+    leaderboard_bbh:
+      num_fewshot: null
+
     leaderboard_mmlu_pro:
       num_fewshot: 5
 
@@ -11,19 +14,6 @@ eval_config:
 
     leaderboard_ifeval:
       num_fewshot: null
-    leaderboard_bbh:
-      num_fewshot: null
-    
-    leaderboard_musr_murder_mysteries:
-      num_fewshot: null
-    
-    leaderboard_musr_object_placements:
-      num_fewshot: null
-    
-    leaderboard_musr_team_allocation:
-      num_fewshot: null
-
-
 
   # batch_size: null
   # max_samples: null

@@ -35,7 +35,14 @@ def main(config_path: str):
 
     wandb.log(results)
 
-    wandb.config.update(model_config)
+    from pprint import pprint
+
+    pprint(results)
+
+    try:
+        wandb.config.update(model_config)
+    except Exception as e:
+        print(f"Error updating wandb config: {e}")
 
 
 if __name__ == "__main__":
