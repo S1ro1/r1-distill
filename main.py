@@ -34,11 +34,6 @@ def main(config_path: str):
         results, model_config = run_eval(student_model, config)
 
     wandb.log(results)
-
-    from pprint import pprint
-
-    pprint(results)
-
     try:
         wandb.config.update(model_config)
     except Exception as e:
