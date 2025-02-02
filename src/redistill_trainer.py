@@ -120,18 +120,19 @@ def train_redistill(
         output_dir=f"outputs/{config.run_name}",
         per_device_train_batch_size=train_config.batch_size,
         learning_rate=train_config.lr,
-        max_steps=train_config.max_steps,
         warmup_steps=train_config.warmup_steps,
         weight_decay=train_config.weight_decay,
         num_train_epochs=train_config.epochs,
         save_strategy="steps",
         save_steps=config.save_steps,
         logging_steps=config.logging_steps,
+        report_to="wandb",
+        run_name=config.run_name,
     )
     tokenizer = AutoTokenizer.from_pretrained(model.config.name_or_path)
 
     dataset_manager = DatasetManager(train_config, tokenizer)
-    datasets = dataset_manager.get_all_datasets()
+    interleaved_dataset = dataset_manager.get_interleaved_dataset()
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
@@ -142,7 +143,7 @@ def train_redistill(
         max_seq_length=train_config.max_seq_length,
         args=training_args,
         data_collator=data_collator,
-        train_dataset=datasets,
+        train_dataset=interleaved_dataset,
     )
 
     trainer.train()

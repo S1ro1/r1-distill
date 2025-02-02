@@ -1,5 +1,6 @@
 from typing import Any
 from datasets import load_dataset, IterableDataset
+import datasets
 from transformers import AutoTokenizer
 
 from src.config import TrainConfig
@@ -95,9 +96,9 @@ class DatasetManager:
         """Get a specific dataset by name"""
         return self.datasets[name]
 
-    def get_all_datasets(self) -> dict[str, IterableDataset]:
+    def get_interleaved_dataset(self) -> dict[str, IterableDataset]:
         """Get all datasets"""
-        return self.datasets
+        return datasets.interleave(list(self.datasets.values()), num_proc=10)
 
     def get_dataset_names(self) -> list[str]:
         """Get list of available dataset names"""

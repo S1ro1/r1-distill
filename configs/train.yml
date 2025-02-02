@@ -1,0 +1,39 @@
+eval_config:
+  tasks:
+    leaderboard_musr:
+      num_fewshot: null
+
+    leaderboard_bbh:
+      num_fewshot: null
+
+    leaderboard_mmlu_pro:
+      num_fewshot: 5
+
+    leaderboard_gpqa:
+      num_fewshot: null
+
+    leaderboard_ifeval:
+      num_fewshot: null
+
+train_config:
+  batch_size: 2
+  lr: 0.0003
+  max_seq_length: 1024
+  warmup_steps: 500
+  weight_decay: 0.01
+  epochs: 1
+
+  datasets:
+    - name: "nickrosh/Evol-Instruct-Code-80k-v1"
+      num_samples: 10000
+    - name: "microsoft/orca-math-word-problems-200k"
+      num_samples: 10000
+    - name: "meta-math/MetaMathQA"
+      num_samples: 10000
+
+run_name: "Qwen-1.5B-by-7B"
+model_name: "Qwen-1.5B-test"
+run_initial_eval: false
+
+student_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+teacher_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
