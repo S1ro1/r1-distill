@@ -116,6 +116,12 @@ def train_redistill(
     config: ScriptConfig,
 ):
     train_config = config.train_config
+    tokenizer = AutoTokenizer.from_pretrained(model.config.name_or_path)
+    dataset_manager = DatasetManager(train_config, tokenizer)
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
+    interleaved_dataset = dataset_manager.get_interleaved_dataset()
+
     training_args = TrainingArguments(
         output_dir=f"outputs/{config.run_name}",
         per_device_train_batch_size=train_config.batch_size,
@@ -128,13 +134,9 @@ def train_redistill(
         logging_steps=config.logging_steps,
         report_to="wandb",
         run_name=config.run_name,
+        max_steps=(dataset_manager.length // train_config.batch_size) * train_config.epochs,
+        bf16=True,
     )
-    tokenizer = AutoTokenizer.from_pretrained(model.config.name_or_path)
-
-    dataset_manager = DatasetManager(train_config, tokenizer)
-    interleaved_dataset = dataset_manager.get_interleaved_dataset()
-
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     trainer = RedistillTrainer(
         model=model,
@@ -148,4 +150,4 @@ def train_redistill(
 
     trainer.train()
 
-    model.push_to_hub(f"s1ro1/{config.model_name}")
+    model.push_to_hub(f"siro1/{config.model_name}")

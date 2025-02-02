@@ -30,7 +30,7 @@ class ScriptConfig:
     student_model: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 
     logging_steps: int = 10
-    save_steps: int = 100
+    save_steps: int = 5000
 
     eval_config: EvalConfig = None
     train_config: TrainConfig = None

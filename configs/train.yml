@@ -16,7 +16,7 @@ eval_config:
       num_fewshot: null
 
 train_config:
-  batch_size: 2
+  batch_size: 1
   lr: 0.0003
   max_seq_length: 1024
   warmup_steps: 500
@@ -25,14 +25,14 @@ train_config:
 
   datasets:
     - name: "nickrosh/Evol-Instruct-Code-80k-v1"
-      num_samples: 10000
+      num_samples: 15000
     - name: "microsoft/orca-math-word-problems-200k"
-      num_samples: 10000
+      num_samples: 15000
     - name: "meta-math/MetaMathQA"
-      num_samples: 10000
+      num_samples: 15000
 
 run_name: "Qwen-1.5B-by-7B"
-model_name: "Qwen-1.5B-test"
+model_name: "Qwen-1.5B-redistill-7B-45k-samples"
 run_initial_eval: false
 
 student_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
