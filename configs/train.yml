@@ -1,4 +1,5 @@
 eval_config:
+  cache_file: null
   tasks:
     leaderboard_musr:
       num_fewshot: null

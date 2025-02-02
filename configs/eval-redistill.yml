@@ -1,5 +1,5 @@
 eval_config:
-  cache_file: "cache.db"
+  cache_file: null
   tasks:
     leaderboard_musr:
       num_fewshot: null
@@ -29,9 +29,11 @@ train_config:
     - name: "nickrosh/Evol-Instruct-Code-80k-v1"
       num_samples: 1000
 
-run_name: "train-test"
-model_name: "Qwen-1.5B-test"
-run_initial_eval: false
+run_name: "Qwen-1.5B-redistill-7B-45k-samples-eval"
+model_name: "Qwen-1.5B-redistill-7B-45k-samples-eval"
+run_initial_eval: true
+run_training: false
 
-student_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-teacher_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B" #TODO: change to 7B after debugging
+
+student_model: "siro1/Qwen-1.5B-redistill-7B-45k-samples"
+teacher_model: null

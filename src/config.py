@@ -7,6 +7,7 @@ from yaml import safe_load
 class EvalConfig:
     tasks: dict[str, dict[str, Any]]
     batch_size: int | None = 1
+    cache_file: str | None = None
 
 
 @dataclass
@@ -35,6 +36,7 @@ class ScriptConfig:
     eval_config: EvalConfig = None
     train_config: TrainConfig = None
     run_initial_eval: bool = True
+    run_training: bool = True
     run_final_eval: bool = True
 
     teacher_in_8bit: str | None = None
