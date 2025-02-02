@@ -70,19 +70,48 @@ class RedistillTrainer(Trainer):
         loss = self._kl_loss(student_outputs, teacher_outputs)
 
         if return_outputs:
-            return loss, student_outputs
+            return (loss, {"loss": loss.item(), "logits": student_outputs.logits})
         return loss
 
-    def _kl_loss(self, student_outputs, teacher_outputs):
-        student_logits = student_outputs.logits
-        teacher_logits = teacher_outputs.logits
+    def _kl_loss(self, student_outputs, teacher_outputs, clamp: int = 100):
+        student_logits = student_outputs.logits  # [batch, seq_len, student_vocab]
+        teacher_logits = teacher_outputs.logits  # [batch, seq_len, teacher_vocab]
+
+        student_vocab_size = student_logits.size(-1)
+        teacher_vocab_size = teacher_logits.size(-1)
+
+        if student_vocab_size < teacher_vocab_size:
+            padding = torch.full(
+                (
+                    student_logits.size(0),
+                    student_logits.size(1),
+                    teacher_vocab_size - student_vocab_size,
+                ),
+                float("-inf"),
+                device=student_logits.device,
+            )
+            student_logits = torch.cat([student_logits, padding], dim=-1)
+
+        valid_mask = (student_logits != float("-inf")).float()
+
+        student_logits = torch.clamp(student_logits, -clamp, clamp)
+        teacher_logits = torch.clamp(teacher_logits, -clamp, clamp)
 
         student_log_probs = torch.log_softmax(student_logits, dim=-1)
-        teacher_log_probs = torch.log_softmax(teacher_logits, dim=-1)
-
-        return torch.nn.functional.kl_div(
-            student_log_probs, teacher_log_probs, reduction="batchmean"
+        teacher_probs = torch.softmax(
+            teacher_logits, dim=-1
         )
+
+        kl_div = torch.nn.functional.kl_div(
+            student_log_probs,
+            teacher_probs,
+            reduction="none",
+            log_target=False,
+        )
+
+        masked_kl_div = (kl_div * valid_mask).sum(dim=-1).mean()
+
+        return masked_kl_div
 
 
 def train_redistill(
