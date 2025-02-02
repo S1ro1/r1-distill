@@ -138,6 +138,7 @@ def train_redistill(
         run_name=config.run_name,
         max_steps=(dataset_manager.length // train_config.batch_size)
         * train_config.epochs,
+        bf16=True,
     )
 
     trainer = RedistillTrainer(
