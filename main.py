@@ -51,19 +51,17 @@ def main(config_path: str):
 
     wandb.config.update(student_model.config.to_dict())
 
-    final_model = train_redistill(student_model, teacher_model, config)
-    
+    final_model = None
     if config.run_training:
-        train_redistill(
-            student_model,
-            teacher_model,
-            config
-        )
+        final_model = train_redistill(student_model, teacher_model, config)
 
     if config.run_final_eval:
+        if final_model is None:
+            raise ValueError(
+                "Final model is None, run_training must be true to run the final evaluation."
+            )
         results = run_eval(final_model, config, is_final_eval=True)
         wandb.log(results)
-
 
 
 if __name__ == "__main__":
