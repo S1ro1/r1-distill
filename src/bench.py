@@ -18,6 +18,7 @@ def run_single_task(
     task_name: str,
     task_config: dict[str, Any],
     task_manager: TaskManager,
+    cache_file: str | None = None,
 ) -> dict[str, Any]:
     results = simple_evaluate(
         model=model,
@@ -25,7 +26,7 @@ def run_single_task(
         task_manager=task_manager,
         device="cuda",
         cache_requests=True,
-        use_cache="cache.db",
+        use_cache=cache_file,
         **task_config,
     )
 
@@ -52,7 +53,7 @@ def run_eval(
     main_task_accuracies = {}
 
     for task_name, task_config in config.eval_config.tasks.items():
-        task_results = run_single_task(model, task_name, task_config, task_manager)
+        task_results = run_single_task(model, task_name, task_config, task_manager, cache_file=config.eval_config.cache_file)
         results.update(task_results)
 
         if task_name in clean_dispatch:

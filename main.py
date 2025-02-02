@@ -6,7 +6,6 @@ from src.bench import run_eval
 
 from transformers import AutoModelForCausalLM
 
-from src.dataset import DatasetManager
 from src.redistill_trainer import train_redistill
 
 
@@ -35,11 +34,12 @@ def main(config_path: str):
     wandb.config.update(student_model.config.to_dict())
 
 
-    train_redistill(
-        student_model,
-        teacher_model,
-        config
-    )
+    if config.run_training:
+        train_redistill(
+            student_model,
+            teacher_model,
+            config
+        )
 
 
 if __name__ == "__main__":
