@@ -38,6 +38,7 @@ def run_single_task(
 def run_eval(
     model: AutoModelForCausalLM,
     config: ScriptConfig,
+    is_final_eval: bool = False
 ) -> dict[str, Any]:
     assert model.device.type == "cuda", "Model must be on GPU, is on {}".format(
         model.device.type
@@ -62,10 +63,14 @@ def run_eval(
                     main_task_accuracies[task_name.replace("leaderboard_", "")] = value[
                         _metric_lookup.get(task_name, "acc")
                     ]
-
+    title = (
+        f"task_accuracies_{config.student_model}"
+        if not is_final_eval
+        else f"task_accuracies_{config.model_name}"
+    )
     wandb.log(
         {
-            "task_accuracies": wandb.plot.bar(
+            title: wandb.plot.bar(
                 wandb.Table(
                     data=[[k, v] for k, v in main_task_accuracies.items()],
                     columns=["task", "accuracy"],

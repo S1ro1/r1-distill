@@ -37,6 +37,9 @@ class ScriptConfig:
     train_config: TrainConfig = None
     run_initial_eval: bool = True
     run_training: bool = True
+    run_final_eval: bool = True
+
+    teacher_in_8bit: str | None = None
 
 
 def load_config(config_path: str) -> ScriptConfig:

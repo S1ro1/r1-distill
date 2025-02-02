@@ -8,6 +8,7 @@ from transformers import (
 from src.config import ScriptConfig
 from src.utils import inherit_signature_from
 import torch
+import torch.amp
 from src.dataset import DatasetManager
 
 
@@ -61,9 +62,10 @@ class RedistillTrainer(Trainer):
         if isinstance(inputs, dict):
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
-        with torch.no_grad():
-            teacher_outputs = self.teacher_model(**inputs)
-        student_outputs = model(**inputs)
+        with torch.amp.autocast("cuda"):
+            with torch.no_grad():
+                teacher_outputs = self.teacher_model(**inputs)
+            student_outputs = model(**inputs)
 
         loss = self._kl_loss(student_outputs, teacher_outputs)
 
@@ -114,7 +116,7 @@ def train_redistill(
     model: AutoModelForCausalLM,
     teacher_model: AutoModelForCausalLM,
     config: ScriptConfig,
-):
+) -> AutoModelForCausalLM:
     train_config = config.train_config
     tokenizer = AutoTokenizer.from_pretrained(model.config.name_or_path)
     dataset_manager = DatasetManager(train_config, tokenizer)
@@ -134,7 +136,8 @@ def train_redistill(
         logging_steps=config.logging_steps,
         report_to="wandb",
         run_name=config.run_name,
-        max_steps=(dataset_manager.length // train_config.batch_size) * train_config.epochs,
+        max_steps=(dataset_manager.length // train_config.batch_size)
+        * train_config.epochs,
         bf16=True,
     )
 
@@ -153,3 +156,4 @@ def train_redistill(
     model.push_to_hub(f"siro1/{config.model_name}")
     tokenizer.push_to_hub(f"siro1/{config.model_name}")
 
+    return model
