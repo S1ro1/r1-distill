@@ -44,16 +44,24 @@ class RedistillTrainer(Trainer):
             raise ValueError("Trainer: training requires a train_dataset.")
 
         def preprocess_dataset(examples):
+            processed = {}
             prompt = self._format_prompt(examples["instruction"])
-            return self.preprocessing_class(
+            tokenized = self.preprocessing_class(
                 prompt,
                 truncation=True,
                 max_length=self.max_seq_length,
                 padding="max_length",
                 return_tensors=None,
             )
+            processed.update(tokenized)
+            return processed
 
-        self.train_dataset = self.train_dataset.map(preprocess_dataset)
+        processed_dataset = self.train_dataset.map(
+            preprocess_dataset,
+            remove_columns=self.train_dataset.column_names,
+            load_from_cache_file=False,
+        )
+        self.train_dataset = processed_dataset
         return super().get_train_dataloader()
 
     def compute_loss(
