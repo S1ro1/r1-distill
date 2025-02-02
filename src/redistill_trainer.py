@@ -154,5 +154,6 @@ def train_redistill(
     trainer.train()
 
     model.push_to_hub(f"siro1/{config.model_name}")
+    tokenizer.push_to_hub(f"siro1/{config.model_name}")
 
     return model
