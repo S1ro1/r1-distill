@@ -58,9 +58,7 @@ class RedistillTrainer(Trainer):
     def compute_loss(
         self, model, inputs, return_outputs=False, num_items_in_batch=None
     ):
-        if isinstance(inputs, dict) and "instruction" in inputs:
-            prompt = self._format_prompt(inputs["instruction"])
-            inputs = self._tokenize_prompt(prompt)
+        if isinstance(inputs, dict):
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
         with torch.no_grad():
@@ -98,9 +96,7 @@ class RedistillTrainer(Trainer):
         teacher_logits = torch.clamp(teacher_logits, -clamp, clamp)
 
         student_log_probs = torch.log_softmax(student_logits, dim=-1)
-        teacher_probs = torch.softmax(
-            teacher_logits, dim=-1
-        )
+        teacher_probs = torch.softmax(teacher_logits, dim=-1)
 
         kl_div = torch.nn.functional.kl_div(
             student_log_probs,
@@ -117,7 +113,6 @@ class RedistillTrainer(Trainer):
 def train_redistill(
     model: AutoModelForCausalLM,
     teacher_model: AutoModelForCausalLM,
-    dataset_manager: DatasetManager,
     config: ScriptConfig,
 ):
     train_config = config.train_config
@@ -133,9 +128,10 @@ def train_redistill(
         save_steps=config.save_steps,
         logging_steps=config.logging_steps,
     )
-
-    datasets = dataset_manager.get_all_datasets()
     tokenizer = AutoTokenizer.from_pretrained(model.config.name_or_path)
+
+    dataset_manager = DatasetManager(train_config, tokenizer)
+    datasets = dataset_manager.get_all_datasets()
 
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
@@ -150,3 +146,5 @@ def train_redistill(
     )
 
     trainer.train()
+
+    model.push_to_hub(f"s1ro1/{config.model_name}")

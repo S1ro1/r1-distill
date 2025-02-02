@@ -34,12 +34,10 @@ def main(config_path: str):
 
     wandb.config.update(student_model.config.to_dict())
 
-    dataset_manager = DatasetManager(config.train_config)
 
     train_redistill(
         student_model,
         teacher_model,
-        dataset_manager,
         config
     )
 

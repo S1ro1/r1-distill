@@ -24,6 +24,7 @@ class TrainConfig:
 @dataclass
 class ScriptConfig:
     project_name: str = "r1-distill"
+    model_name: str = "Qwen-1.5B"
     run_name: str | None = None
     teacher_model: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
     student_model: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
