@@ -38,6 +38,7 @@ teacher_in_8bit: "hqq"
 run_initial_eval: false
 run_training: true
 run_final_eval: true
+save_steps: 15000
 
 student_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 teacher_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
