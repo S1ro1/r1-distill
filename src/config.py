@@ -24,6 +24,9 @@ class TrainConfig:
     gradient_checkpointing: bool = False
     gradient_checkpointing_kwargs: dict[str, Any] = field(default_factory=dict)
     gradient_accumulation_steps: int = 1
+    kl_clip: float = 100.0
+
+
 @dataclass
 class ScriptConfig:
     project_name: str = "r1-distill"

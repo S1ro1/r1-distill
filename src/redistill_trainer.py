@@ -18,6 +18,7 @@ class RedistillTrainer(Trainer):
         self,
         teacher_model: AutoModelForCausalLM,
         tokenizer: AutoTokenizer,
+        kl_clip: float = 100.0,
         max_seq_length: int = 512,
         *args,
         **kwargs,
@@ -81,7 +82,7 @@ class RedistillTrainer(Trainer):
             return (loss, {"loss": loss.item(), "logits": student_outputs.logits})
         return loss
 
-    def _kl_loss(self, student_outputs, teacher_outputs, clamp: int = 100):
+    def _kl_loss(self, student_outputs, teacher_outputs):
         student_logits = student_outputs.logits  # [batch, seq_len, student_vocab]
         teacher_logits = teacher_outputs.logits  # [batch, seq_len, teacher_vocab]
 
@@ -102,8 +103,8 @@ class RedistillTrainer(Trainer):
 
         valid_mask = (student_logits != float("-inf")).float()
 
-        student_logits = torch.clamp(student_logits, -clamp, clamp)
-        teacher_logits = torch.clamp(teacher_logits, -clamp, clamp)
+        student_logits = torch.clamp(student_logits, -self.kl_clip, self.kl_clip)
+        teacher_logits = torch.clamp(teacher_logits, -self.kl_clip, self.kl_clip)
 
         student_log_probs = torch.log_softmax(student_logits, dim=-1)
         teacher_probs = torch.softmax(teacher_logits, dim=-1)
@@ -133,9 +134,14 @@ def train_redistill(
     interleaved_dataset = dataset_manager.get_interleaved_dataset()
 
     if train_config.warmup_ratio is not None:
-        warmup_steps = int(dataset_manager.length * train_config.warmup_ratio) // train_config.gradient_accumulation_steps
+        warmup_steps = (
+            int(dataset_manager.length * train_config.warmup_ratio)
+            // train_config.gradient_accumulation_steps
+        )
     else:
-        warmup_steps = train_config.warmup_steps // train_config.gradient_accumulation_steps
+        warmup_steps = (
+            train_config.warmup_steps // train_config.gradient_accumulation_steps
+        )
 
     training_args = TrainingArguments(
         output_dir=f"outputs/{config.run_name}",
@@ -149,7 +155,10 @@ def train_redistill(
         logging_steps=config.logging_steps,
         report_to="wandb",
         run_name=config.run_name,
-        max_steps=(dataset_manager.length // (train_config.batch_size * train_config.gradient_accumulation_steps))
+        max_steps=(
+            dataset_manager.length
+            // (train_config.batch_size * train_config.gradient_accumulation_steps)
+        )
         * train_config.epochs,
         bf16=True,
         gradient_checkpointing=train_config.gradient_checkpointing,
@@ -163,6 +172,7 @@ def train_redistill(
         teacher_model=teacher_model,
         tokenizer=tokenizer,
         max_seq_length=train_config.max_seq_length,
+        kl_clip=train_config.kl_clip,
         args=training_args,
         data_collator=data_collator,
         train_dataset=interleaved_dataset,
