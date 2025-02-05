@@ -26,6 +26,7 @@ class RedistillTrainer(Trainer):
         super().__init__(*args, **kwargs)
         self.teacher_model = teacher_model
         self.teacher_model.eval()
+        self.kl_clip = kl_clip
         self.max_seq_length = max_seq_length
         self.preprocessing_class = tokenizer
 
