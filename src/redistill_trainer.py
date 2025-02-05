@@ -132,11 +132,16 @@ def train_redistill(
 
     interleaved_dataset = dataset_manager.get_interleaved_dataset()
 
+    if train_config.warmup_ratio is not None:
+        warmup_steps = int(dataset_manager.length * train_config.warmup_ratio) // train_config.gradient_accumulation_steps
+    else:
+        warmup_steps = train_config.warmup_steps // train_config.gradient_accumulation_steps
+
     training_args = TrainingArguments(
         output_dir=f"outputs/{config.run_name}",
         per_device_train_batch_size=train_config.batch_size,
         learning_rate=train_config.lr,
-        warmup_steps=train_config.warmup_steps,
+        warmup_steps=warmup_steps,
         weight_decay=train_config.weight_decay,
         num_train_epochs=train_config.epochs,
         save_strategy="steps",
@@ -144,9 +149,13 @@ def train_redistill(
         logging_steps=config.logging_steps,
         report_to="wandb",
         run_name=config.run_name,
-        max_steps=(dataset_manager.length // train_config.batch_size)
+        max_steps=(dataset_manager.length // (train_config.batch_size * train_config.gradient_accumulation_steps))
         * train_config.epochs,
         bf16=True,
+        gradient_checkpointing=train_config.gradient_checkpointing,
+        gradient_checkpointing_kwargs=train_config.gradient_checkpointing_kwargs,
+        gradient_accumulation_steps=train_config.gradient_accumulation_steps,
+        optim="adamw_torch_fused",
     )
 
     trainer = RedistillTrainer(

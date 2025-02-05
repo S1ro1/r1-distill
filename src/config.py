@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from yaml import safe_load
 
@@ -20,8 +20,10 @@ class TrainConfig:
     max_steps: int = 1000
     warmup_steps: int = 100
     weight_decay: float = 0.01
-
-
+    warmup_ratio: float | None = None
+    gradient_checkpointing: bool = False
+    gradient_checkpointing_kwargs: dict[str, Any] = field(default_factory=dict)
+    gradient_accumulation_steps: int = 1
 @dataclass
 class ScriptConfig:
     project_name: str = "r1-distill"
