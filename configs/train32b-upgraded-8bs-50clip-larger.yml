@@ -31,14 +31,14 @@ train_config:
 
   datasets:
     - name: "nickrosh/Evol-Instruct-Code-80k-v1"
-      num_samples: 10000
+      num_samples: 12000
     - name: "microsoft/orca-math-word-problems-200k"
-      num_samples: 10000
+      num_samples: 12000
     - name: "meta-math/MetaMathQA"
-      num_samples: 10000
+      num_samples: 12000
 
-run_name: "Qwen-1.5B-by-32B-4096-upgraded-8bs-50clip"
-model_name: "Qwen-1.5B-redistill-32B-30k-upgraded-8bs-50clip"
+run_name: "Qwen-1.5B-by-32B-4096-upgraded-8bs-50clip-larger"
+model_name: "Qwen-1.5B-redistill-32B-36k-upgraded-8bs-50clip-larger"
 teacher_in_8bit: "hqq"
 
 run_initial_eval: false
